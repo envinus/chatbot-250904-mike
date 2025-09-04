@@ -11,161 +11,320 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 커스텀 CSS 스타일
+# Material Design 기반 CSS 스타일
 st.markdown("""
 <style>
-    /* 메인 배경 */
+    /* Material Design 색상 팔레트 */
+    :root {
+        --md-primary: #1976D2;
+        --md-primary-variant: #1565C0;
+        --md-secondary: #03DAC6;
+        --md-background: #FAFAFA;
+        --md-surface: #FFFFFF;
+        --md-surface-variant: #F5F5F5;
+        --md-on-primary: #FFFFFF;
+        --md-on-surface: #212121;
+        --md-on-surface-variant: #757575;
+        --md-outline: #E0E0E0;
+        --md-shadow: rgba(0, 0, 0, 0.12);
+    }
+    
+    /* 전체 배경 */
     .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
+        background-color: var(--md-background);
+        padding: 0;
     }
     
-    /* 제목 스타일 */
-    .main-title {
-        text-align: center;
-        color: white;
-        font-size: 3rem;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        margin-bottom: 2rem;
-        background: linear-gradient(45deg, #FFD700, #FFA500);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+    /* 앱바 (헤더) */
+    .app-header {
+        background-color: var(--md-primary);
+        color: var(--md-on-primary);
+        padding: 16px 24px;
+        box-shadow: 0 2px 4px var(--md-shadow);
+        margin: -1rem -1rem 2rem -1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     
-    /* 사이드바 스타일 */
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #2C3E50 0%, #3498DB 100%);
+    .app-title {
+        font-size: 20px;
+        font-weight: 500;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
-    /* 채팅 컨테이너 */
-    .chat-container {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 15px;
-        padding: 2rem;
-        margin: 1rem 0;
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-        backdrop-filter: blur(4px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+    .verified-icon {
+        background: var(--md-secondary);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
     }
     
-    /* 사용자 메시지 */
+    /* 카드 컨테이너 */
+    .message-card {
+        background: var(--md-surface);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+        box-shadow: 0 1px 3px var(--md-shadow);
+        border: 1px solid var(--md-outline);
+    }
+    
+    /* 사용자 메시지 (오른쪽 정렬) */
+    .user-message-container {
+        display: flex;
+        justify-content: flex-end;
+        margin: 16px 0;
+    }
+    
     .user-message {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 20px 20px 5px 20px;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        animation: slideInRight 0.3s ease-out;
+        background: var(--md-primary);
+        color: var(--md-on-primary);
+        padding: 12px 16px;
+        border-radius: 18px 18px 4px 18px;
+        max-width: 70%;
+        font-size: 14px;
+        line-height: 1.4;
+        box-shadow: 0 1px 2px var(--md-shadow);
     }
     
-    /* AI 메시지 */
+    /* AI 메시지 (왼쪽 정렬) */
+    .ai-message-container {
+        display: flex;
+        justify-content: flex-start;
+        margin: 16px 0;
+    }
+    
     .ai-message {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 20px 20px 20px 5px;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
-        animation: slideInLeft 0.3s ease-out;
+        background: var(--md-surface-variant);
+        color: var(--md-on-surface);
+        padding: 12px 16px;
+        border-radius: 18px 18px 18px 4px;
+        max-width: 70%;
+        font-size: 14px;
+        line-height: 1.4;
+        box-shadow: 0 1px 2px var(--md-shadow);
+        border: 1px solid var(--md-outline);
     }
     
-    /* 애니메이션 */
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideInLeft {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    /* 입력 박스 스타일 */
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 25px;
-        border: 2px solid #667eea;
-        padding: 12px 20px;
-        font-size: 16px;
-        transition: all 0.3s ease;
-    }
-    
-    .stTextInput > div > div > input:focus {
-        border-color: #764ba2;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
-        transform: scale(1.02);
-    }
-    
-    /* 버튼 스타일 */
+    /* 플로팅 액션 버튼 스타일 */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: var(--md-primary);
+        color: var(--md-on-primary);
         border: none;
-        padding: 12px 30px;
-        border-radius: 25px;
-        font-size: 16px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        border-radius: 24px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 0 2px 4px var(--md-shadow);
+        min-height: 48px;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        background: var(--md-primary-variant);
+        box-shadow: 0 4px 8px var(--md-shadow);
+        transform: translateY(-1px);
     }
     
-    /* 사이드바 스타일 */
-    .sidebar-title {
-        color: #FFD700;
-        font-size: 1.5rem;
-        font-weight: bold;
+    .stButton > button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px var(--md-shadow);
+    }
+    
+    /* 텍스트 입력 필드 */
+    .stTextInput > div > div > input {
+        background: var(--md-surface);
+        border: 2px solid var(--md-outline);
+        border-radius: 4px;
+        padding: 16px;
+        font-size: 16px;
+        color: var(--md-on-surface);
+        transition: border-color 0.2s ease;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: var(--md-primary);
+        outline: none;
+        box-shadow: 0 0 0 1px var(--md-primary);
+    }
+    
+    /* 사이드바 */
+    .sidebar .sidebar-content {
+        background: var(--md-surface);
+        border-right: 1px solid var(--md-outline);
+    }
+    
+    /* 칩 스타일 */
+    .status-chip {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    
+    .myth-chip {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+    
+    .fact-chip {
+        background: #E8F5E8;
+        color: #2E7D32;
+    }
+    
+    /* 정보 카드 */
+    .info-card {
+        background: var(--md-surface);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 8px 0;
+        border-left: 4px solid var(--md-primary);
+        box-shadow: 0 1px 3px var(--md-shadow);
+    }
+    
+    /* 메트릭 카드 */
+    .metric-card {
+        background: var(--md-surface);
+        border-radius: 8px;
+        padding: 16px;
         text-align: center;
-        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px var(--md-shadow);
+        border: 1px solid var(--md-outline);
     }
     
-    /* 경고 메시지 스타일 */
-    .stAlert {
-        border-radius: 10px;
-        border-left: 5px solid #FF6B6B;
+    .metric-value {
+        font-size: 32px;
+        font-weight: 500;
+        color: var(--md-primary);
     }
     
-    /* 메시지 아이콘 */
-    .message-icon {
-        font-size: 1.5rem;
-        margin-right: 0.5rem;
+    .metric-label {
+        font-size: 14px;
+        color: var(--md-on-surface-variant);
+        margin-top: 4px;
+    }
+    
+    /* 하단 액션 바 */
+    .bottom-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--md-surface);
+        padding: 16px 24px;
+        border-top: 1px solid var(--md-outline);
+        box-shadow: 0 -2px 4px var(--md-shadow);
+        z-index: 1000;
+    }
+    
+    /* 스크롤바 숨기기 */
+    .main::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .main::-webkit-scrollbar-track {
+        background: var(--md-background);
+    }
+    
+    .main::-webkit-scrollbar-thumb {
+        background: var(--md-outline);
+        border-radius: 4px;
+    }
+    
+    .main::-webkit-scrollbar-thumb:hover {
+        background: var(--md-on-surface-variant);
+    }
+    
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+        .app-header {
+            padding: 12px 16px;
+        }
+        
+        .user-message, .ai-message {
+            max-width: 85%;
+        }
+        
+        .bottom-actions {
+            padding: 12px 16px;
+        }
+    }
+    
+    /* 리플 효과 */
+    @keyframes ripple {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 헤더 섹션
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.markdown('<h1 class="main-title">🌍 Travel ChatGPT ✈️</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: white; font-size: 1.2rem; margin-bottom: 2rem;">🗺️ 당신만의 여행 가이드와 대화하세요! 🧳</p>', unsafe_allow_html=True)
+# 헤더 (WHO 스타일)
+st.markdown("""
+<div class="app-header">
+    <div class="app-title">
+        ✈️ Travel Assistant
+        <div class="verified-icon">✓</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button style="background: none; border: none; color: white; padding: 8px;">⚙️</button>
+        <button style="background: none; border: none; color: white; padding: 8px;">⋯</button>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# 사이드바 설정
+# OpenAI API 키 입력 (사이드바)
 with st.sidebar:
-    st.markdown('<h2 class="sidebar-title">⚙️ 설정</h2>', unsafe_allow_html=True)
+    st.markdown("### 🔐 API 설정")
     
-    # API 키 입력
     openai_api_key = st.text_input(
-        "🔑 OpenAI API 키", 
+        "OpenAI API 키", 
         type="password",
-        placeholder="sk-..."
+        placeholder="sk-...",
+        help="OpenAI에서 발급받은 API 키를 입력하세요"
     )
     
     if not openai_api_key:
-        st.warning("🚨 OpenAI API 키를 입력하세요.")
-        st.info("💡 OpenAI 웹사이트에서 API 키를 발급받으세요.")
+        st.markdown("""
+        <div class="info-card">
+            <h4 style="margin: 0 0 8px 0; color: var(--md-on-surface);">⚠️ API 키 필요</h4>
+            <p style="margin: 0; font-size: 14px; color: var(--md-on-surface-variant);">
+                OpenAI 웹사이트에서 API 키를 발급받아 입력해주세요.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
     
-    st.success("✅ API 키가 설정되었습니다!")
+    st.success("✅ API 키 연결됨")
     
-    # 추가 설정 옵션
-    st.markdown("### 🎯 채팅 옵션")
+    # 통계 표시
+    if "messages" in st.session_state:
+        message_count = len([msg for msg in st.session_state.messages if msg["role"] != "system"])
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{message_count}</div>
+            <div class="metric-label">총 메시지</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
     
     # 대화 초기화 버튼
     if st.button("🗑️ 대화 초기화", use_container_width=True):
@@ -179,12 +338,6 @@ with st.sidebar:
             }
         ]
         st.rerun()
-    
-    # 통계 정보
-    if "messages" in st.session_state:
-        message_count = len([msg for msg in st.session_state.messages if msg["role"] != "system"])
-        st.markdown(f"### 📊 대화 통계")
-        st.metric("💬 총 메시지 수", message_count)
 
 # OpenAI 클라이언트 설정
 client = OpenAI(api_key=openai_api_key)
@@ -200,45 +353,62 @@ if "messages" not in st.session_state:
                 "여행지 추천, 준비물, 문화, 음식 등 다양한 여행 주제에 대해 친절하게 한국어와 영어로 동시에 안내해주세요."
                     }  ]
 
-# 메인 채팅 영역
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+# 메인 대화 영역
+st.markdown("### 💬 대화")
 
 # 대화 내용 표시 (system 메시지는 제외)
-chat_container = st.container()
-with chat_container:
-    for message in st.session_state.messages:
+messages_container = st.container()
+with messages_container:
+    for i, message in enumerate(st.session_state.messages):
         if message["role"] != "system":
             if message["role"] == "user":
                 st.markdown(f"""
-                <div class="user-message">
-                    <span class="message-icon">👤</span><strong>You:</strong><br>
-                    {message['content']}
+                <div class="user-message-container">
+                    <div class="user-message">
+                        {message['content']}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
+                # AI 메시지에 Myth/Fact 칩 추가 (랜덤하게 표시)
+                import random
+                chip_type = "fact-chip" if random.choice([True, False]) else "myth-chip"
+                chip_text = "Fact" if "fact-chip" in chip_type else "정보 확인 필요"
+                
                 st.markdown(f"""
-                <div class="ai-message">
-                    <span class="message-icon">🤖</span><strong>Travel Assistant:</strong><br>
-                    {message['content']}
+                <div class="ai-message-container">
+                    <div class="ai-message">
+                        <div style="margin-bottom: 8px;">
+                            <span class="status-chip {chip_type}">{chip_text}</span>
+                        </div>
+                        {message['content']}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+# 입력 영역을 하단에 고정
+st.markdown("<div style='margin-bottom: 120px;'></div>", unsafe_allow_html=True)
 
-# 입력 영역
-st.markdown("### 💭 메시지 입력")
-col1, col2 = st.columns([4, 1])
+# 하단 고정 입력 영역
+st.markdown("""
+<div class="bottom-actions">
+    <div style="max-width: 1200px; margin: 0 auto;">
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns([5, 1])
 
 with col1:
     user_input = st.text_input(
         "", 
-        placeholder="여행에 관해 궁금한 것을 물어보세요... (예: 일본 여행 추천지는?)",
+        placeholder="여행에 대해 궁금한 것을 물어보세요... 🌍",
         key="user_input",
         label_visibility="collapsed"
     )
 
 with col2:
-    send_button = st.button("🚀 전송", use_container_width=True)
+    send_button = st.button("전송", use_container_width=True, key="send_btn")
+
+st.markdown("</div></div>", unsafe_allow_html=True)
 
 # 메시지 전송 처리
 if send_button and user_input:
@@ -246,7 +416,7 @@ if send_button and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     
     # 로딩 스피너 표시
-    with st.spinner('🤔 답변을 생각하고 있습니다...'):
+    with st.spinner('💭 답변을 준비하고 있습니다...'):
         try:
             # OpenAI API 호출
             response = client.chat.completions.create(
@@ -265,11 +435,30 @@ if send_button and user_input:
         except Exception as e:
             st.error(f"❌ 오류가 발생했습니다: {str(e)}")
 
-# 푸터
+# 퀵 액션 버튼들 (하단에 표시)
 st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: white; margin-top: 2rem;">
-    <p>🌟 <strong>Travel ChatGPT</strong> - 당신의 여행을 더욱 특별하게 만들어드립니다! ✨</p>
-    <p style="font-size: 0.8rem; opacity: 0.8;">Powered by OpenAI GPT-4o-mini 🚀</p>
-</div>
-""", unsafe_allow_html=True)
+quick_actions = st.columns(3)
+
+with quick_actions[0]:
+    if st.button("🏖️ 인기 여행지", use_container_width=True):
+        st.session_state.messages.append({
+            "role": "user", 
+            "content": "올해 인기 있는 여행지를 추천해주세요"
+        })
+        st.rerun()
+
+with quick_actions[1]:
+    if st.button("🧳 여행 준비물", use_container_width=True):
+        st.session_state.messages.append({
+            "role": "user", 
+            "content": "해외여행 필수 준비물을 알려주세요"
+        })
+        st.rerun()
+
+with quick_actions[2]:
+    if st.button("🍜 현지 음식", use_container_width=True):
+        st.session_state.messages.append({
+            "role": "user", 
+            "content": "일본 여행 시 꼭 먹어봐야 할 음식을 추천해주세요"
+        })
+        st.rerun()
