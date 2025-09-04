@@ -1,56 +1,65 @@
+# openai, OpenAI: OpenAI API 호출을 위한 라이브러리
+# streamlit: 웹 UI 프레임워크
+# os: (현재 예제에서는 사용되지 않음) 환경 변수 접근 또는 파일 경로 처리 용도
+
+import openai
 import streamlit as st
 from openai import OpenAI
+import os
 
-# Show title and description.
-st.title("💬 Chatbot")
-st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-3.5 model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
-)
+# Streamlit app
+st.title("ChatGPT와 대화하기")
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
+# 오른쪽 사이드바에 OpenAI API 키 입력란 추가
+st.sidebar.title("설정")
+openai_api_key = st.sidebar.text_input("OpenAI API 키를 입력하세요", type="password")
+
 if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
+    st.sidebar.warning("OpenAI API 키를 입력하세요.")
+    st.stop()
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
+# client = OpenAI(temperature=0.7, openai_api_key=openai_api_key)
+client = OpenAI(api_key  = openai_api_key)
 
-    # Create a session state variable to store the chat messages. This ensures that the
-    # messages persist across reruns.
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+# 초기 대화 상태 설정
+# Streamlit 앱은 새로고침마다 상태가 초기화되는데, st.session_state를 쓰면 
+#   사용자별 세션에 데이터를 유지할 수 있음.
+# st.session_state에는 여러 개의 변수를 자유롭게 지정하고 저장할 수 있음.
+# 숫자, 문자열, 리스트(대화 이력 등) 저장 가능.
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+       {"role": "system", 
+         "content": "당신은 여행에 관한 질문에 답하는 전문 챗봇입니다. "
+                "모든 답변은 반드시 한국어와 영어를 함께 제공해주세요. 예시: '서울은 한국의 수도입니다. (Seoul is the capital of South Korea.)' "
+                "여행 외의 질문에 대해서는 '죄송하지만 여행 관련 질문에만 답변드릴 수 있습니다. (Sorry, I can only answer travel-related questions.)'라고 답변하세요. "
+                "모르는 내용은 절대 만들어서 답하지 마세요. 확실하지 않은 정보는 '정확한 정보를 확인해보시기 바랍니다. (Please verify the accurate information.)'라고 안내하세요. "
+                "여행지 추천, 준비물, 문화, 음식 등 다양한 여행 주제에 대해 친절하게 한국어와 영어로 동시에 안내해주세요."
+                    }  ]
+# 사용자 입력
+user_input = st.text_input("당신:", key="user_input")
 
-    # Display the existing chat messages via `st.chat_message`.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+if st.button("전송") and user_input:
+    # 사용자 메시지 추가
+    st.session_state.messages.append({"role": "user", 
+                                      "content": user_input})
 
-    # Create a chat input field to allow the user to enter a message. This will display
-    # automatically at the bottom of the page.
-    if prompt := st.chat_input("What is up?"):
+    # OpenAI API 호출
+    response = client.chat.completions.create (
+        model = "gpt-4o-mini",
+        messages = st.session_state.messages
+    )
 
-        # Store and display the current prompt.
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    # OpenAI 응답 추가
+    response_message = response.choices[0].message.content
+    # st.session_state.messages.append(response_message)
+    st.session_state.messages.append({"role": "assistant", 
+                                      "content": response_message})
 
-        # Generate a response using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
+    # 사용자 입력 초기화
+    user_input = ""
 
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+# 대화 내용 표시 (system 메시지는 제외)
+for message in st.session_state.messages:
+    if message["role"] != "system":  # system 메시지는 화면에 표시하지 않음
+        icon = "👤"  if message["role"] == "user" else "🤖"
+        st.markdown(f"{icon}: {message['content']}")
