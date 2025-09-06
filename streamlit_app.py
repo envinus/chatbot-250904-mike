@@ -1,5 +1,6 @@
 import streamlit as st
 from openai import OpenAI
+import time
 
 # 페이지 설정
 st.set_page_config(
@@ -146,10 +147,10 @@ st.markdown("""
         box-shadow: 0 0 0 1px var(--md-primary);
     }
     
-    /* 사이드바 */
-    .sidebar .sidebar-content {
-        background: var(--md-surface);
-        border-right: 1px solid var(--md-outline);
+    /* 메인 콘텐츠 너비 조정 */
+    .main .block-container {
+        max-width: 1000px;
+        padding: 2rem 1rem;
     }
     
     /* 칩 스타일 */
@@ -206,10 +207,12 @@ st.markdown("""
         left: 0;
         right: 0;
         background: var(--md-surface);
-        padding: 16px 24px;
+        padding: 16px 0;
         border-top: 1px solid var(--md-outline);
         box-shadow: 0 -2px 4px var(--md-shadow);
         z-index: 1000;
+        display: flex;
+        justify-content: center;
     }
     
     /* 로딩 바 스타일 */
@@ -270,7 +273,11 @@ st.markdown("""
         }
         
         .bottom-actions {
-            padding: 12px 16px;
+            padding: 12px;
+        }
+        
+        .main .block-container {
+            padding: 1rem 0.5rem;
         }
     }
 </style>
@@ -293,35 +300,18 @@ st.markdown("""
 # API 키 설정
 openai_api_key = st.secrets["openai"]["API_KEY"]
 
-# 사이드바 설정
-with st.sidebar:
-    st.markdown("### 🔐 API 상태")
-    st.success("✅ API 키가 설정되었습니다")
-    
-    # 통계 표시
-    if "messages" in st.session_state:
-        message_count = len([msg for msg in st.session_state.messages if msg["role"] != "system"])
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{message_count}</div>
-            <div class="metric-label">총 메시지</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # 대화 초기화 버튼
-    if st.button("🗑️ 대화 초기화", use_container_width=True):
-        st.session_state.messages = [
-            {"role": "system", 
-             "content": "당신은 여행에 관한 질문에 답하는 전문 챗봇입니다. "
-                    "모든 답변은 반드시 한국어와 영어를 함께 제공해주세요. 예시: '서울은 한국의 수도입니다. (Seoul is the capital of South Korea.)' "
-                    "여행 외의 질문에 대해서는 '죄송하지만 여행 관련 질문에만 답변드릴 수 있습니다. (Sorry, I can only answer travel-related questions.)'라고 답변하세요. "
-                    "모르는 내용은 절대 만들어서 답하지 마세요. 확실하지 않은 정보는 '정확한 정보를 확인해보시기 바랍니다. (Please verify the accurate information.)'라고 안내하세요. "
-                    "여행지 추천, 준비물, 문화, 음식 등 다양한 여행 주제에 대해 친절하게 한국어와 영어로 동시에 안내해주세요."
-            }
-        ]
-        st.rerun()
+# 대화 초기화 버튼
+if st.button("🗑️ 대화 초기화"):
+    st.session_state.messages = [
+        {"role": "system", 
+         "content": "당신은 여행에 관한 질문에 답하는 전문 챗봇입니다. "
+                "모든 답변은 반드시 한국어와 영어를 함께 제공해주세요. 예시: '서울은 한국의 수도입니다. (Seoul is the capital of South Korea.)' "
+                "여행 외의 질문에 대해서는 '죄송하지만 여행 관련 질문에만 답변드릴 수 있습니다. (Sorry, I can only answer travel-related questions.)'라고 답변하세요. "
+                "모르는 내용은 절대 만들어서 답하지 마세요. 확실하지 않은 정보는 '정확한 정보를 확인해보시기 바랍니다. (Please verify the accurate information.)'라고 안내하세요. "
+                "여행지 추천, 준비물, 문화, 음식 등 다양한 여행 주제에 대해 친절하게 한국어와 영어로 동시에 안내해주세요."
+        }
+    ]
+    st.rerun()
 
 # OpenAI 클라이언트 설정
 client = OpenAI(api_key=openai_api_key)
@@ -371,14 +361,8 @@ with messages_container:
 
 # 로딩 바 표시
 if st.session_state.is_loading:
-    st.markdown("""
-    <div class="loading-container">
-        <div class="loading-bar"></div>
-    </div>
-    <div class="loading-text">
-        💭 여행 전문가가 답변을 준비하고 있습니다...
-    </div>
-    """, unsafe_allow_html=True)
+    with st.spinner('💭 여행 전문가가 답변을 준비하고 있습니다...'):
+        time.sleep(0.5)  # 로딩 애니메이션을 보여주기 위한 딜레이
 
 # 입력 영역을 하단에 고정
 st.markdown("<div style='margin-bottom: 120px;'></div>", unsafe_allow_html=True)
@@ -396,7 +380,7 @@ with st.form(key="message_form", clear_on_submit=True):
     with col1:
         user_input = st.text_input(
             "", 
-            placeholder="여행에 대해 궁금한 것을 물어보세요... 🌍 (Enter로 전송)",
+            placeholder="여행에 대해 궁금한 것을 물어보세요... (Enter로 전송)",
             key="user_input_form",
             label_visibility="collapsed"
         )
