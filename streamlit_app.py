@@ -1,7 +1,5 @@
-import openai
 import streamlit as st
 from openai import OpenAI
-import os
 
 # 페이지 설정
 st.set_page_config(
@@ -19,7 +17,7 @@ st.markdown("""
         --md-primary: #1976D2;
         --md-primary-variant: #1565C0;
         --md-secondary: #03DAC6;
-        --md-background: #FAFAFA;
+        --md-background: #E8EBF5;
         --md-surface: #FFFFFF;
         --md-surface-variant: #F5F5F5;
         --md-on-primary: #FFFFFF;
@@ -65,16 +63,6 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         font-size: 14px;
-    }
-    
-    /* 카드 컨테이너 */
-    .message-card {
-        background: var(--md-surface);
-        border-radius: 12px;
-        padding: 16px;
-        margin: 16px 0;
-        box-shadow: 0 1px 3px var(--md-shadow);
-        border: 1px solid var(--md-outline);
     }
     
     /* 사용자 메시지 (오른쪽 정렬) */
@@ -174,11 +162,6 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    .myth-chip {
-        background: #FFEBEE;
-        color: #C62828;
-    }
-    
     .fact-chip {
         background: #E8F5E8;
         color: #2E7D32;
@@ -229,6 +212,35 @@ st.markdown("""
         z-index: 1000;
     }
     
+    /* 로딩 바 스타일 */
+    .loading-container {
+        width: 100%;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        margin: 20px 0;
+        overflow: hidden;
+    }
+    
+    .loading-bar {
+        height: 8px;
+        background: linear-gradient(90deg, var(--md-primary), var(--md-secondary));
+        border-radius: 10px;
+        animation: loading 2s ease-in-out infinite;
+    }
+    
+    @keyframes loading {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+    
+    .loading-text {
+        text-align: center;
+        color: var(--md-on-surface-variant);
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    
     /* 스크롤바 숨기기 */
     .main::-webkit-scrollbar {
         width: 8px;
@@ -261,22 +273,10 @@ st.markdown("""
             padding: 12px 16px;
         }
     }
-    
-    /* 리플 효과 */
-    @keyframes ripple {
-        0% {
-            transform: scale(0);
-            opacity: 1;
-        }
-        100% {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# 헤더 (WHO 스타일)
+# 헤더
 st.markdown("""
 <div class="app-header">
     <div class="app-title">
@@ -290,29 +290,13 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# OpenAI API 키 입력 (사이드바)
+# API 키 설정
+openai_api_key = st.secrets["openai"]["API_KEY"]
+
+# 사이드바 설정
 with st.sidebar:
-    st.markdown("### 🔐 API 설정")
-    
-    openai_api_key = st.text_input(
-        "OpenAI API 키", 
-        type="password",
-        placeholder="sk-...",
-        help="OpenAI에서 발급받은 API 키를 입력하세요"
-    )
-    
-    if not openai_api_key:
-        st.markdown("""
-        <div class="info-card">
-            <h4 style="margin: 0 0 8px 0; color: var(--md-on-surface);">⚠️ API 키 필요</h4>
-            <p style="margin: 0; font-size: 14px; color: var(--md-on-surface-variant);">
-                OpenAI 웹사이트에서 API 키를 발급받아 입력해주세요.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.stop()
-    
-    st.success("✅ API 키 연결됨")
+    st.markdown("### 🔐 API 상태")
+    st.success("✅ API 키가 설정되었습니다")
     
     # 통계 표시
     if "messages" in st.session_state:
@@ -353,6 +337,10 @@ if "messages" not in st.session_state:
                 "여행지 추천, 준비물, 문화, 음식 등 다양한 여행 주제에 대해 친절하게 한국어와 영어로 동시에 안내해주세요."
                     }  ]
 
+# 로딩 상태 관리
+if "is_loading" not in st.session_state:
+    st.session_state.is_loading = False
+
 # 메인 대화 영역
 st.markdown("### 💬 대화")
 
@@ -370,21 +358,27 @@ with messages_container:
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                # AI 메시지에 Myth/Fact 칩 추가 (랜덤하게 표시)
-                import random
-                chip_type = "fact-chip" if random.choice([True, False]) else "myth-chip"
-                chip_text = "Fact" if "fact-chip" in chip_type else "정보 확인 필요"
-                
                 st.markdown(f"""
                 <div class="ai-message-container">
                     <div class="ai-message">
                         <div style="margin-bottom: 8px;">
-                            <span class="status-chip {chip_type}">{chip_text}</span>
+                            <span class="status-chip fact-chip">Fact</span>
                         </div>
                         {message['content']}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+# 로딩 바 표시
+if st.session_state.is_loading:
+    st.markdown("""
+    <div class="loading-container">
+        <div class="loading-bar"></div>
+    </div>
+    <div class="loading-text">
+        💭 여행 전문가가 답변을 준비하고 있습니다...
+    </div>
+    """, unsafe_allow_html=True)
 
 # 입력 영역을 하단에 고정
 st.markdown("<div style='margin-bottom: 120px;'></div>", unsafe_allow_html=True)
@@ -395,70 +389,55 @@ st.markdown("""
     <div style="max-width: 1200px; margin: 0 auto;">
 """, unsafe_allow_html=True)
 
-col1, col2 = st.columns([5, 1])
-
-with col1:
-    user_input = st.text_input(
-        "", 
-        placeholder="여행에 대해 궁금한 것을 물어보세요... 🌍",
-        key="user_input",
-        label_visibility="collapsed"
-    )
-
-with col2:
-    send_button = st.button("전송", use_container_width=True, key="send_btn")
+# Enter 키 입력을 위한 폼 사용
+with st.form(key="message_form", clear_on_submit=True):
+    col1, col2 = st.columns([5, 1])
+    
+    with col1:
+        user_input = st.text_input(
+            "", 
+            placeholder="여행에 대해 궁금한 것을 물어보세요... 🌍 (Enter로 전송)",
+            key="user_input_form",
+            label_visibility="collapsed"
+        )
+    
+    with col2:
+        send_button = st.form_submit_button("전송", use_container_width=True)
 
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # 메시지 전송 처리
-if send_button and user_input:
+if send_button and user_input and not st.session_state.is_loading:
+    # 로딩 상태 시작
+    st.session_state.is_loading = True
+    
     # 사용자 메시지 추가
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # 로딩 스피너 표시
-    with st.spinner('💭 답변을 준비하고 있습니다...'):
-        try:
-            # OpenAI API 호출
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=st.session_state.messages,
-                temperature=0.7
-            )
-            
-            # OpenAI 응답 추가
-            response_message = response.choices[0].message.content
-            st.session_state.messages.append({"role": "assistant", "content": response_message})
-            
-            # 페이지 새로고침으로 입력 필드 초기화
-            st.rerun()
-            
-        except Exception as e:
-            st.error(f"❌ 오류가 발생했습니다: {str(e)}")
+    # 페이지 새로고침하여 로딩 바 표시
+    st.rerun()
 
-# 퀵 액션 버튼들 (하단에 표시)
-st.markdown("---")
-quick_actions = st.columns(3)
-
-with quick_actions[0]:
-    if st.button("🏖️ 인기 여행지", use_container_width=True):
-        st.session_state.messages.append({
-            "role": "user", 
-            "content": "올해 인기 있는 여행지를 추천해주세요"
-        })
+# 실제 API 호출 (로딩 상태일 때)
+if st.session_state.is_loading:
+    try:
+        # OpenAI API 호출
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=st.session_state.messages,
+            temperature=0.7
+        )
+        
+        # OpenAI 응답 추가
+        response_message = response.choices[0].message.content
+        st.session_state.messages.append({"role": "assistant", "content": response_message})
+        
+        # 로딩 상태 종료
+        st.session_state.is_loading = False
+        
+        # 페이지 새로고침
         st.rerun()
-
-with quick_actions[1]:
-    if st.button("🧳 여행 준비물", use_container_width=True):
-        st.session_state.messages.append({
-            "role": "user", 
-            "content": "해외여행 필수 준비물을 알려주세요"
-        })
-        st.rerun()
-
-with quick_actions[2]:
-    if st.button("🍜 현지 음식", use_container_width=True):
-        st.session_state.messages.append({
-            "role": "user", 
-            "content": "일본 여행 시 꼭 먹어봐야 할 음식을 추천해주세요"
-        })
+        
+    except Exception as e:
+        st.session_state.is_loading = False
+        st.error(f"❌ 오류가 발생했습니다: {str(e)}")
         st.rerun()
